@@ -1,2 +1,2 @@
 # Civix-CleanStreet
-Civix-CleanStreet Reporting and Tracking Issues Application
+Civix-CleanStreet Civic Issues Reporting and Tracking Application
