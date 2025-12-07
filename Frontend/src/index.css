@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Minimal custom styles for background image path compatibility */
+.bg-right-image {
+  background-image: url('./Assets/image.png');
+}
