@@ -1,10 +1,16 @@
- import React, { useState } from 'react'
-import Login from './Login'
-import Signup from './Signup'
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+
+import Login from "./Login";
+import Signup from "./Signup";
+import ProfileSettingsPage from "./profile";
 
 export default function App() {
-  const [page, setPage] = useState('login')
-  return page === 'login'
-    ? <Login onSignup={() => setPage('signup')} />
-    : <Signup onBack={() => setPage('login')} />
+  return (
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/profile" element={<ProfileSettingsPage />} />
+    </Routes>
+  );
 }
