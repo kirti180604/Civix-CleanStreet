@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-export default function Signup({ onBack }) {
+const Signup = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [role, setRole] = useState(''); 
   const [passwordError, setPasswordError] = useState('');
   const [confirmError, setConfirmError] = useState('');
-  const [loggingEnabled, setLoggingEnabled] = useState(true);
+  const [loggingEnabled] = useState(true);
+  const navigate = useNavigate();
 
   // Logging helpers
   function logInput(label, value) {
@@ -44,8 +47,9 @@ export default function Signup({ onBack }) {
     setConfirmError(cErr);
     if (pErr || cErr) return;
 
-    // You can add signup logic here
-    alert('Signup submitted!');
+    // Simulate successful signup
+    alert('Signup successful! Redirecting to login...');
+    navigate('/login');
   }
 
   return (
@@ -63,7 +67,7 @@ export default function Signup({ onBack }) {
                 <label className="block mt-3 mb-1 text-[#666] text-[13px]">First Name*</label>
                 <input
                   type="text"
-                  className="w-full p-2.5 border border-[#ddd] rounded-md bg-white text-[14px] focus:outline-cleanBrown"
+                  className="w-full p-2.5 border border-[#ddd] rounded-md bg-white text-[14px] focus:outline-cleanBrown animate-[fadeInUp_0.6s_ease-out_0.4s_both]"
                   value={firstName}
                   onChange={e => {
                     const v = e.target.value;
@@ -78,7 +82,7 @@ export default function Signup({ onBack }) {
                 <label className="block mt-3 mb-1 text-[#666] text-[13px]">Last Name*</label>
                 <input
                   type="text"
-                  className="w-full p-2.5 border border-[#ddd] rounded-md bg-white text-[14px] focus:outline-cleanBrown"
+                  className="w-full p-2.5 border border-[#ddd] rounded-md bg-white text-[14px] focus:outline-cleanBrown animate-[fadeInUp_0.6s_ease-out_0.4s_both]"
                   value={lastName}
                   onChange={e => {
                     const v = e.target.value;
@@ -104,6 +108,25 @@ export default function Signup({ onBack }) {
               }}
               required
             />
+
+            {/* Role Dropdown */}
+            <label className="block mt-3 mb-1 text-[#666] text-[13px]">Role*</label>
+            <select
+              className="w-full p-2.5 border border-[#ddd] rounded-md bg-white text-[14px] focus:outline-cleanBrown animate-[fadeInUp_0.6s_ease-out_0.4s_both]"  
+              value={role}
+              onChange={e => {
+                const v = e.target.value;
+                logInput('Role', v);
+                setRole(v);
+              }}
+              required
+            >
+              <option value="">Select Role</option>
+              <option value="User">User</option>
+              <option value="Volunteer">Volunteer</option>
+              <option value="Admin">Admin</option>
+            </select>
+
             <label className="block mt-3 mb-1 text-[#666] text-[13px]">Password*</label>
             <input
               type="password"
@@ -137,32 +160,30 @@ export default function Signup({ onBack }) {
             />
             {confirmError && <p className="text-red-500 text-sm mt-1">{confirmError}</p>}
             <button
-              className="w-full bg-cleanBrown text-white p-2.5 rounded-md mt-4 font-semibold cursor-pointer animate-bounce shadow-md hover:bg-[#a05e2e] transition-colors"
+              className="w-full bg-cleanBrown text-white p-2.5 rounded-md mt-4 font-semibold cursor-pointer  shadow-md hover:bg-[#a05e2e] transition-colors"
               type="submit"
             >
               Sign Up
             </button>
           </form>
           <p className="text-[#777] text-center mt-5 text-[13px] animate-[fadeInUp_0.7s_ease-out_0.6s_both]">
-            <label className="flex items-center gap-2 justify-center mb-2">
-              <input type="hidden" hidden={loggingEnabled} onChange={e => setLoggingEnabled(e.target.checked)} />
-              {/* <span className="text-[#666]">Console log inputs</span> */}
-            </label>
             Already have an account?{' '}
-            <a
-              href="#"
+            <Link
+              to="/login"
               className="text-[#6b6b6b] hover:underline"
-              onClick={e => {
-                e.preventDefault();
-                onBack();
-              }}
             >
               Log In
-            </a>
+            </Link>
+          </p>
+          <p className="text-center mt-4">
+            <Link to="/" className="text-blue-600 hover:underline">
+              ← Back to Home
+            </Link>
           </p>
         </div>
       </div>
-      {/* Remove duplicate image div on right */}
     </div>
-  )
-}
+  );
+};
+
+export default Signup;
