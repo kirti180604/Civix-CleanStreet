@@ -12,6 +12,7 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
+          
           {/* Landing Page */}
           <Route 
             path="/" 
@@ -30,9 +31,7 @@ function App() {
               isLoggedIn ? (
                 <Navigate to="/profile" replace />
               ) : (
-                <Login 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
+                <Login setIsLoggedIn={setIsLoggedIn} />
               )
             } 
           />
@@ -49,22 +48,21 @@ function App() {
             } 
           />
           
-          {/* Profile Settings Page - Protected Route */}
+          {/* Profile Settings Page */}
           <Route 
             path="/profile" 
             element={
               isLoggedIn ? (
-                <ProfileSettings 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
+                <ProfileSettings setIsLoggedIn={setIsLoggedIn} />
               ) : (
                 <Navigate to="/login" replace />
               )
             } 
           />
-          
-          {/* Redirect any unknown routes to home */}
+
+          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          
         </Routes>
       </div>
     </Router>

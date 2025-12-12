@@ -15,10 +15,3 @@ npm install
 
 # 2) Start dev server
 npm run dev
-```
-
-Open the URL printed by Vite (usually http://localhost:5173).
-
-Notes
-- The right-side image uses an Unsplash URL; replace in `src/styles.css` with a local image if you prefer.
-- Replace the alert in `Login.jsx` with your real authentication logic / API call.
