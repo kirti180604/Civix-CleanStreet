@@ -1,70 +1,61 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/Landingpage';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ProfileSettings from './pages/Profilesettings';
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
+import LandingPage from "./Landingpage";
+import Login from "./Login";
+import Signup from "./Signup";
+import Admin from "./Admin";
+import Profile from "./Profile"; // ✅ ADD THIS
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   return (
     <Router>
       <div className="App">
         <Routes>
+
           {/* Landing Page */}
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
-              <LandingPage 
+              <LandingPage
                 isLoggedIn={isLoggedIn}
                 setIsLoggedIn={setIsLoggedIn}
               />
-            } 
+            }
           />
-          
-          {/* Login Page */}
-          <Route 
-            path="/login" 
+
+          {/* Login */}
+          <Route
+            path="/login"
+            element={<Login setIsLoggedIn={setIsLoggedIn} />}
+          />
+
+          {/* Signup */}
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Profile (Protected) */}
+          <Route
+            path="/profile"
             element={
-              isLoggedIn ? (
-                <Navigate to="/profile" replace />
-              ) : (
-                <Login 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
-              )
-            } 
+              isLoggedIn ? <Profile /> : <Navigate to="/login" />
+            }
           />
-          
-          {/* Signup Page */}
-          <Route 
-            path="/signup" 
+
+          {/* Admin (Protected) */}
+          <Route
+            path="/admin"
             element={
-              isLoggedIn ? (
-                <Navigate to="/profile" replace />
-              ) : (
-                <Signup />
-              )
-            } 
+              isLoggedIn ? <Admin /> : <Navigate to="/login" />
+            }
           />
-          
-          {/* Profile Settings Page - Protected Route */}
-          <Route 
-            path="/profile" 
-            element={
-              isLoggedIn ? (
-                <ProfileSettings 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
-          
-          {/* Redirect any unknown routes to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+
         </Routes>
       </div>
     </Router>
@@ -72,3 +63,5 @@ function App() {
 }
 
 export default App;
+
+
