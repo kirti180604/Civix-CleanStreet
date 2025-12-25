@@ -4,6 +4,8 @@ import LandingPage from './pages/Landingpage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ProfileSettings from './pages/Profilesettings';
+import ReportIssue from './pages/ReportIssue';
+import ViewComplaints from './pages/ViewComplaints'; 
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -12,6 +14,7 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
+          
           {/* Landing Page */}
           <Route 
             path="/" 
@@ -28,11 +31,9 @@ function App() {
             path="/login" 
             element={
               isLoggedIn ? (
-                <Navigate to="/profile" replace />
+                <Navigate to="/dashboard" replace />
               ) : (
-                <Login 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
+                <Login setIsLoggedIn={setIsLoggedIn} />
               )
             } 
           />
@@ -42,29 +43,43 @@ function App() {
             path="/signup" 
             element={
               isLoggedIn ? (
-                <Navigate to="/profile" replace />
+                <Navigate to="/dashboard" replace />
               ) : (
                 <Signup />
               )
             } 
           />
           
-          {/* Profile Settings Page - Protected Route */}
+          {/* Profile Settings Page */}
           <Route 
             path="/profile" 
             element={
               isLoggedIn ? (
-                <ProfileSettings 
-                  setIsLoggedIn={setIsLoggedIn}
-                />
+                <ProfileSettings setIsLoggedIn={setIsLoggedIn} />
               ) : (
                 <Navigate to="/login" replace />
               )
             } 
           />
+
+          {/* Dashboard Page */}
           
-          {/* Redirect any unknown routes to home */}
+
+          {/* Report Issue Page - PUBLIC ACCESS (No login required) */}
+          <Route 
+            path="/report" 
+            element={<ReportIssue />} // No login check here
+          />
+
+          {/* View Complaints Page - PUBLIC ACCESS (No login required) */}
+          <Route 
+            path="/complaints" 
+            element={<ViewComplaints />} // Add this route
+          />
+
+          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          
         </Routes>
       </div>
     </Router>
