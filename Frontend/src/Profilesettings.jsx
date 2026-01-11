@@ -18,6 +18,7 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
       location: localStorage.getItem('userLocation') || '',
       website: localStorage.getItem('userWebsite') || '',
       bio: localStorage.getItem('userBio') || '',
+      profileImage: localStorage.getItem('userProfileImage') || null,
     };
   };
 
@@ -25,6 +26,7 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
   const [activeTab, setActiveTab] = useState('Profile Settings');
   const [isMobile, setIsMobile] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -41,6 +43,7 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
 
   useEffect(() => {
     setFormData(getUserData());
+    setProfileImagePreview(getUserData().profileImage);
   }, []);
 
   const handleChange = (e) => {
@@ -51,12 +54,52 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
     }));
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target.result;
+        setFormData(prev => ({
+          ...prev,
+          profileImage: imageData
+        }));
+        setProfileImagePreview(imageData);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      profileImage: null
+    }));
+    setProfileImagePreview(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // Save to localStorage
     Object.keys(formData).forEach(key => {
-      localStorage.setItem(`user${key.charAt(0).toUpperCase() + key.slice(1)}`, formData[key]);
+      if (key === 'profileImage' && formData[key]) {
+        localStorage.setItem('userProfileImage', formData[key]);
+      } else if (key !== 'profileImage') {
+        localStorage.setItem(`user${key.charAt(0).toUpperCase() + key.slice(1)}`, formData[key]);
+      }
     });
     
     console.log('Profile saved:', formData);
@@ -79,6 +122,20 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
   };
 
   const getUserInitials = () => {
+    if (formData.profileImage) {
+      return (
+        <img 
+          src={formData.profileImage} 
+          alt="Profile" 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            borderRadius: '50%', 
+            objectFit: 'cover' 
+          }} 
+        />
+      );
+    }
     return `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase();
   };
 
@@ -303,7 +360,6 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
     },
     photoUploadArea: {
       display: "flex",
-      alignItems: "center",
       gap: isMobile ? "15px" : "20px",
       flexDirection: isMobile ? "column" : "row",
       alignItems: isMobile ? "flex-start" : "center",
@@ -440,17 +496,48 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
               <p style={styles.photoDescription}>Upload a new profile photo</p>
               <div style={styles.photoUploadArea}>
                 <div style={styles.photoPlaceholder}>
-                  <div style={styles.cameraIcon}>📷</div>
+                  {profileImagePreview || formData.profileImage ? (
+                    <img 
+                      src={profileImagePreview || formData.profileImage} 
+                      alt="Profile" 
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={styles.cameraIcon}>📷</div>
+                  )}
                 </div>
-                <button 
-                  style={styles.uploadButton}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#e8e8e8"}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-                  onTouchStart={(e) => e.currentTarget.style.backgroundColor = "#e8e8e8"}
-                  onTouchEnd={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-                >
-                  Upload Profile
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <label style={styles.uploadButton}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                    />
+                    Upload Profile
+                  </label>
+                  {(profileImagePreview || formData.profileImage) && (
+                    <button 
+                      type="button"
+                      onClick={handleRemoveImage}
+                      style={{
+                        ...styles.uploadButton,
+                        backgroundColor: '#ff6b6b',
+                        color: 'white',
+                        border: '1px solid #ff5252'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#ff5252"}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#ff6b6b"}
+                    >
+                      Remove Photo
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -633,7 +720,26 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
           </button>
           <h2 style={styles.mobileTitle}>Profile</h2>
           <div style={styles.mobileUserInitials}>
-            {getUserInitials()}
+            {formData.profileImage ? (
+              <img 
+                src={formData.profileImage} 
+                alt="Profile" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  borderRadius: '50%', 
+                  objectFit: 'cover' 
+                }} 
+              />
+            ) : (
+              <span style={{ 
+                color: 'white', 
+                fontSize: '14px', 
+                fontWeight: '600' 
+              }}>
+                {`${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase()}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -653,7 +759,26 @@ const ProfileSettings = ({ setIsLoggedIn }) => {
           
           <div style={styles.userInfo}>
             <div style={styles.avatar}>
-              {getUserInitials()}
+              {formData.profileImage ? (
+                <img 
+                  src={formData.profileImage} 
+                  alt="Profile" 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    borderRadius: '50%', 
+                    objectFit: 'cover' 
+                  }} 
+                />
+              ) : (
+                <span style={{ 
+                  color: 'white', 
+                  fontSize: isMobile ? '18px' : '24px', 
+                  fontWeight: '600' 
+                }}>
+                  {`${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase()}
+                </span>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <h3 style={styles.userName}>
