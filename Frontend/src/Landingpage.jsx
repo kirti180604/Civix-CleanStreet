@@ -20,7 +20,8 @@ import {
   Clock,
   MapPin,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 
 // Header Component
@@ -28,9 +29,10 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Home size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
-    { id: 'report', label: 'Report Issue', icon: <ClipboardList size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
-    { id: 'complaints', label: 'View Complaints', icon: <Eye size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { id: 'dashboard', label: 'Dashboard', icon: <Home size={20} />, path: '/dashboard', activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { id: 'report', label: 'Report Issue', icon: <ClipboardList size={20} />, path: '/report', activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { id: 'complaints', label: 'View Complaints', icon: <Eye size={20} />, path: '/complaints', activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { id: 'profile', label: 'Profile', icon: <User size={20} />, path: '/profile', activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
   ];
 
   const handleLogout = () => {
@@ -44,7 +46,7 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">CS</span>
+              <span className="text-black font-bold text-lg">CS</span>
             </div>
             <Link to="/" className="text-2xl font-bold text-gray-900 hover:no-underline">
               Clean<span className="text-amber-600">Street</span>
@@ -52,16 +54,15 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
+          <nav className="flex items-center space-x-2">
             {navigationItems.map((item) => (
               <Link
                 key={item.id}
-                to="/"
-                onClick={() => setActiveTab(item.id)}
+                to={item.path}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 hover-lift border ${
                   activeTab === item.id 
                     ? `${item.activeColor} shadow-sm` 
-                    : 'hover:bg-gray-100 border-transparent text-gray-700'
+                    : 'hover:bg-gray-100 border-transparent text-gray-900'
                 } feature-card no-underline`}
               >
                 {item.icon}
@@ -71,7 +72,7 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
           </nav>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="flex items-center space-x-3">
             {isLoggedIn ? (
               <button 
                 className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors hover-lift"
@@ -110,15 +111,12 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
               {navigationItems.map((item) => (
                 <Link
                   key={item.id}
-                  to="/"
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg feature-card no-underline ${
                     activeTab === item.id 
                       ? `${item.activeColor}` 
-                      : 'hover:bg-gray-100 text-gray-700'
+                      : 'hover:bg-gray-100 text-gray-900'
                   }`}
                 >
                   {item.icon}
@@ -306,11 +304,11 @@ const Stats = () => {
 const QuickActions = () => {
   return (
     <div className="mb-12">
-      <div className="bg-gradient-to-b from-amber-600 to-yellow-700 rounded-2xl shadow-lg p-6 text-white h-full">
+      <div className="bg-white from-amber-600 to-yellow-700 rounded-2xl shadow-lg p-6 text-black h-full">
         <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
         <div className="space-y-4">
-          <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift">
-            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+          <button className="w-full bg-yellow/20 hover:bg-yellow/90 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift">
+            <div className="w-12 h-12 bg-yellow/20 rounded-lg flex items-center justify-center">
               <PlusCircle size={24} />
             </div>
             <div className="text-left">
@@ -492,9 +490,8 @@ const Footer = () => {
 };
 
 // Main Landing Page Component
-const LandingPage = () => {
+const LandingPage = ({ isLoggedIn, setIsLoggedIn }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">

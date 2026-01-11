@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Home, 
@@ -33,13 +33,13 @@ import {
 } from 'lucide-react';
 
 // Import your images from assets folder
-import garbageImage from '../assets/garbage-dumping.jpg';
-import streetLightImage from '../assets/broken-street-light.jpg';
-import waterLoggingImage from '../assets/water-logging.jpg';
-import illegalParkingImage from '../assets/illegal-parking.jpg';
-import garbageDetail1 from '../assets/garbage-detail1.jpg';
-import garbageDetail2 from '../assets/garbage-detail2.jpg';
-import waterLoggingDetail from '../assets/water-logging-detail.jpg';
+import garbageImage from './Assets/garbage-dumping.jpg';
+import streetLightImage from './Assets/broken-street-light.jpg';
+import waterLoggingImage from './Assets/water-logging.jpg';
+import illegalParkingImage from './Assets/illegal-parking.jpg';
+import garbageDetail1 from './Assets/garbage-detail1.jpg';
+import garbageDetail2 from './Assets/garbage-detail2.jpg';
+import waterLoggingDetail from './Assets/water-logging-detail.jpg';
 
 const ViewComplaints = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -51,6 +51,28 @@ const ViewComplaints = () => {
   const [userDislikes, setUserDislikes] = useState({});
   const [commentLikes, setCommentLikes] = useState({});
   const [commentDislikes, setCommentDislikes] = useState({});
+  const [volunteerLocation, setVolunteerLocation] = useState('');
+  
+  // Detect volunteer's location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          // For demo purposes, mock the location as 'Mysore'
+          // In real app, use reverse geocoding API to get city
+          setVolunteerLocation('Mysore');
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Fallback to default location
+          setVolunteerLocation('Mysore');
+        }
+      );
+    } else {
+      setVolunteerLocation('Mysore');
+    }
+  }, []);
   
   // Mock data with imported images from assets
   const [complaints, setComplaints] = useState([
@@ -67,6 +89,7 @@ const ViewComplaints = () => {
       discussion: [],
       imageUrl: garbageImage, // Imported image
       status: "pending",
+      location: "Mysore",
       statusHistory: [
         { status: "Reported", date: "Nov 25, 2025", time: "10:30 AM" },
         { status: "Under Review", date: "Nov 26, 2025", time: "2:15 PM" }
@@ -102,6 +125,7 @@ const ViewComplaints = () => {
       discussion: [],
       imageUrl: streetLightImage, // Imported image
       status: "in-progress",
+      location: "Mysore",
       statusHistory: [
         { status: "Reported", date: "Nov 24, 2025", time: "9:15 AM" },
         { status: "Assigned", date: "Nov 25, 2025", time: "11:00 AM" },
@@ -190,24 +214,6 @@ const ViewComplaints = () => {
       tags: ["illegal-parking", "footpath", "traffic"]
     }
   ]);
-
-  // Filter complaints based on status and search
-  const filteredComplaints = complaints.filter(complaint => {
-    const matchesStatus = activeFilter === 'all' || complaint.status === activeFilter;
-    const matchesSearch = searchTerm === '' || 
-      complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      complaint.address.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-
-  // Status counts
-  const statusCounts = {
-    all: complaints.length,
-    pending: complaints.filter(c => c.status === 'pending').length,
-    'in-progress': complaints.filter(c => c.status === 'in-progress').length,
-    solved: complaints.filter(c => c.status === 'solved').length
-  };
 
   const openComplaintDetails = (complaint) => {
     setSelectedComplaint({
@@ -392,6 +398,25 @@ const ViewComplaints = () => {
     }
   };
 
+  // Filter complaints based on status, search, and location
+  const filteredComplaints = complaints.filter(complaint => {
+    const matchesStatus = activeFilter === 'all' || complaint.status === activeFilter;
+    const matchesSearch = searchTerm === '' || 
+      complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      complaint.address.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLocation = !volunteerLocation || complaint.location === volunteerLocation;
+    return matchesStatus && matchesSearch && matchesLocation;
+  });
+
+  // Calculate status counts for filtered complaints
+  const statusCounts = {
+    all: filteredComplaints.length,
+    pending: filteredComplaints.filter(c => c.status === 'pending').length,
+    'in-progress': filteredComplaints.filter(c => c.status === 'in-progress').length,
+    solved: filteredComplaints.filter(c => c.status === 'solved').length,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Header */}
@@ -401,7 +426,7 @@ const ViewComplaints = () => {
             <div className="flex items-center space-x-2">
               <Link to="/" className="flex items-center space-x-2 no-underline">
                 <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center shadow-md">
-                  <span className="text-white font-bold text-lg">CS</span>
+                  <span className="text-black font-bold text-lg">CS</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-900">
                   Clean<span className="text-amber-600">Street</span>

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LandingPage from './pages/Landingpage';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ProfileSettings from './pages/Profilesettings';
-import ReportIssue from './pages/ReportIssue';
-import ViewComplaints from './pages/ViewComplaints'; 
+import LandingPage from './Landingpage';
+import Login from './Login';
+import Signup from './Signup';
+import ProfileSettings from './Profilesettings';
+import ReportIssue from './ReportIssue';
+import ViewComplaints from './ViewComplaints';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -15,15 +15,16 @@ function App() {
       <div className="App">
         <Routes>
           
-          {/* Landing Page */}
+          {/* Root redirects to login or dashboard */}
           <Route 
             path="/" 
-            element={
-              <LandingPage 
-                isLoggedIn={isLoggedIn}
-                setIsLoggedIn={setIsLoggedIn}
-              />
-            } 
+            element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} 
+          />
+          
+          {/* Dashboard Page */}
+          <Route 
+            path="/dashboard" 
+            element={<LandingPage isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />} 
           />
           
           {/* Login Page */}
@@ -61,9 +62,6 @@ function App() {
               )
             } 
           />
-
-          {/* Dashboard Page */}
-          
 
           {/* Report Issue Page - PUBLIC ACCESS (No login required) */}
           <Route 
