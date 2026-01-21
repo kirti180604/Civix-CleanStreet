@@ -31,7 +31,7 @@ import {
   Flag,
   Camera
 } from 'lucide-react';
-import { complaintsAPI } from './services/api';
+import { complaintsAPI, profileAPI, commentAPI } from './services/api';
 
 // Import your images from assets folder
 import garbageImage from './Assets/garbage-dumping.jpg';
@@ -198,37 +198,96 @@ const ViewComplaints = () => {
   // Initialize state with complaints from API or localStorage
   const [complaints, setComplaints] = useState(defaultComplaints);
   const [isLoadingComplaints, setIsLoadingComplaints] = useState(true);
-  
+
+  const mapApiComplaintToUi = (c) => {
+    const rawStatus = c?.status;
+    const status = rawStatus === 'received'
+      ? 'pending'
+      : rawStatus === 'in_review'
+        ? 'in-progress'
+        : rawStatus === 'resolved'
+          ? 'solved'
+          : (rawStatus || 'pending');
+
+    const createdAt = c?.createdAt ? new Date(c.createdAt) : null;
+    const reportedOn = createdAt
+      ? createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' })
+      : '';
+
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const backendOrigin = apiBaseUrl.replace(/\/?api\/?$/, '');
+    const photoPath = c?.photo;
+    const photoUrl = typeof photoPath === 'string'
+      ? (photoPath.startsWith('http') ? photoPath : `${backendOrigin}${photoPath.startsWith('/') ? '' : '/'}${photoPath}`)
+      : null;
+
+    return {
+      id: c?._id || c?.id,
+      title: c?.title || '',
+      type: c?.issueType || c?.type || '',
+      priority: c?.priority || '',
+      reportedOn,
+      address: c?.address || '',
+      landmark: c?.landmark || '',
+      description: c?.description || '',
+      fullDescription: c?.fullDescription || c?.description || '',
+      discussion: Array.isArray(c?.discussion) ? c.discussion : [],
+      imageUrl: photoUrl,
+      status,
+      location: c?.location || '',
+      statusHistory: Array.isArray(c?.statusHistory) ? c.statusHistory : [],
+      likes: typeof c?.likes === 'number' ? c.likes : 0,
+      dislikes: typeof c?.dislikes === 'number' ? c.dislikes : 0,
+      severity: c?.severity || (c?.priority || ''),
+      affectedArea: c?.affectedArea || '',
+      reporter: c?.reporter || { name: '', contact: '', anonymous: false },
+      additionalImages: Array.isArray(c?.additionalImages) ? c.additionalImages : [],
+      assignedTo: c?.assigned_to || c?.assignedTo || '',
+      estimatedResolution: c?.estimatedResolution || '',
+      category: c?.category || '',
+      tags: Array.isArray(c?.tags) ? c.tags : []
+    };
+  };
+
+  const mapApiCommentToUi = (c) => {
+    const createdAt = c?.createdAt ? new Date(c.createdAt) : null;
+    const userName = c?.userId?.firstName
+      ? `${c.userId.firstName || ''} ${c.userId.lastName || ''}`.trim()
+      : (c?.userId?.name || 'User');
+
+    return {
+      id: c?._id || c?.id || Date.now(),
+      user: userName || 'User',
+      comment: c?.content || '',
+      time: createdAt ? createdAt.toLocaleString() : 'Just now',
+      likes: 0,
+      dislikes: 0,
+      userAvatar: (userName || 'U').charAt(0).toUpperCase()
+    };
+  };
+
   // Effect to fetch complaints from API
   useEffect(() => {
     setIsLoadingComplaints(true);
-    complaintsAPI.getAll()
-      .then(response => {
-        // Merge API complaints with defaults (or replace if API returns full list)
-        if (response.data && Array.isArray(response.data)) {
-          setComplaints(response.data);
+    const token = localStorage.getItem('token');
+
+    const fetcher = token ? profileAPI.getUserComplaints : complaintsAPI.getAll;
+    fetcher()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setComplaints(data.map(mapApiComplaintToUi));
         } else {
-          // Fallback to localStorage or defaults
-          const savedComplaints = localStorage.getItem('complaints');
-          if (savedComplaints) {
-            const userComplaints = JSON.parse(savedComplaints);
-            setComplaints([...defaultComplaints, ...userComplaints]);
-          }
+          setComplaints(defaultComplaints);
         }
         setIsLoadingComplaints(false);
       })
-      .catch(error => {
-        console.error('Failed to fetch complaints from API:', error);
-        // Fallback to localStorage or defaults
-        const savedComplaints = localStorage.getItem('complaints');
-        if (savedComplaints) {
-          const userComplaints = JSON.parse(savedComplaints);
-          setComplaints([...defaultComplaints, ...userComplaints]);
-        }
+      .catch((error) => {
+        console.error('Error fetching complaints:', error);
+        setComplaints(defaultComplaints);
         setIsLoadingComplaints(false);
       });
   }, []);
-  
+
   // Detect volunteer's location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -250,15 +309,26 @@ const ViewComplaints = () => {
     }
   }, []);
 
-  const openComplaintDetails = (complaint) => {
-    setSelectedComplaint({
+  const openComplaintDetails = async (complaint) => {
+    const base = {
       ...complaint,
       likes: complaint.likes || 0,
       dislikes: complaint.dislikes || 0,
-      discussion: complaint.discussion || []
-    });
+      discussion: []
+    };
+
+    setSelectedComplaint(base);
     setIsModalOpen(true);
     setCommentText('');
+
+    try {
+      const apiComments = await commentAPI.getByComplaintId(base.id);
+      const discussion = Array.isArray(apiComments) ? apiComments.map(mapApiCommentToUi).reverse() : [];
+      setSelectedComplaint(prev => prev ? ({ ...prev, discussion }) : prev);
+    } catch (err) {
+      // keep modal open even if comments fail
+      console.error('Failed to load comments:', err);
+    }
   };
 
   const closeModal = () => {
@@ -267,31 +337,19 @@ const ViewComplaints = () => {
     setCommentText('');
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!commentText.trim() || !selectedComplaint) return;
-    
-    const newComment = {
-      id: Date.now(),
-      user: "You",
-      comment: commentText,
-      time: "Just now",
-      likes: 0,
-      dislikes: 0,
-      userAvatar: "Y"
-    };
 
-    setSelectedComplaint(prev => ({
-      ...prev,
-      discussion: [...prev.discussion, newComment]
-    }));
+    try {
+      await commentAPI.add(selectedComplaint.id, commentText.trim());
+      const apiComments = await commentAPI.getByComplaintId(selectedComplaint.id);
+      const discussion = Array.isArray(apiComments) ? apiComments.map(mapApiCommentToUi).reverse() : [];
 
-    setComplaints(prev => prev.map(complaint => 
-      complaint.id === selectedComplaint.id
-        ? { ...complaint, discussion: [...complaint.discussion, newComment] }
-        : complaint
-    ));
-
-    setCommentText('');
+      setSelectedComplaint(prev => prev ? ({ ...prev, discussion }) : prev);
+      setCommentText('');
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
   };
 
   const handleLikeComment = (commentId) => {
@@ -440,16 +498,16 @@ const ViewComplaints = () => {
       complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       complaint.address.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = !volunteerLocation || complaint.location === volunteerLocation;
+    const matchesLocation = !volunteerLocation || !complaint.location || complaint.location === volunteerLocation;
     return matchesStatus && matchesSearch && matchesLocation;
   });
 
   // Calculate status counts for filtered complaints
   const statusCounts = {
-    all: filteredComplaints.length,
-    pending: filteredComplaints.filter(c => c.status === 'pending').length,
-    'in-progress': filteredComplaints.filter(c => c.status === 'in-progress').length,
-    solved: filteredComplaints.filter(c => c.status === 'solved').length,
+    all: complaints.length,
+    pending: complaints.filter(c => c.status === 'pending').length,
+    'in-progress': complaints.filter(c => c.status === 'in-progress').length,
+    solved: complaints.filter(c => c.status === 'solved').length,
   };
 
   return (

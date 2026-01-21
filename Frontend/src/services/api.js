@@ -52,6 +52,42 @@ export const authAPI = {
   }
 };
 
+// Comment APIs (separate endpoint used by backend: /api/comment/:complaintId)
+export const commentAPI = {
+  getByComplaintId: async (complaintId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/comment/${complaintId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to fetch comments');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  add: async (complaintId, text) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/comment/${complaintId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to add comment');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+
 // Complaints/Issues APIs
 export const complaintsAPI = {
   // Get all complaints
@@ -89,13 +125,17 @@ export const complaintsAPI = {
   create: async (complaintData) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/complaints`, {
+      const isFormData = typeof FormData !== 'undefined' && complaintData instanceof FormData;
+
+      const response = await fetch(`${API_BASE_URL}${isFormData ? '/complaint/submit' : '/complaints'}`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(complaintData)
+        headers: isFormData
+          ? { 'Authorization': `Bearer ${token}` }
+          : {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+        body: isFormData ? complaintData : JSON.stringify(complaintData)
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to create complaint');

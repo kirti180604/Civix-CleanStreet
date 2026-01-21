@@ -243,15 +243,30 @@ const ReportIssue = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!issueTitle.trim() || !briefDescription.trim() || !issueType || !priorityLevel || !address.trim() || !detailedDescription.trim()) {
       setToast({ message: 'Please fill in all required fields', type: 'error' });
       return;
     }
-    
-    // Create complaint object
-    const complaintData = {
+
+    const hasImage = uploadedImages.length > 0 && uploadedImages[0]?.file;
+
+    // Create complaint payload (FormData if photo exists)
+    const complaintData = hasImage ? (() => {
+      const fd = new FormData();
+      fd.append('title', issueTitle);
+      fd.append('type', issueType);
+      fd.append('priority', priorityLevel);
+      fd.append('address', address);
+      fd.append('landmark', nearbyLandmark);
+      fd.append('description', briefDescription);
+      fd.append('fullDescription', detailedDescription);
+      fd.append('latitude', markerPosition[0]);
+      fd.append('longitude', markerPosition[1]);
+      fd.append('photo', uploadedImages[0].file);
+      return fd;
+    })() : {
       title: issueTitle,
       type: issueType,
       priority: priorityLevel,
@@ -259,22 +274,21 @@ const ReportIssue = () => {
       landmark: nearbyLandmark,
       description: briefDescription,
       fullDescription: detailedDescription,
-      location: markerPosition,
       latitude: markerPosition[0],
       longitude: markerPosition[1]
     };
-    
+
     // Call API to create complaint
     complaintsAPI.create(complaintData)
       .then(response => {
         console.log('Complaint submitted:', response);
-        
+
         // Show success toast
-        setToast({ 
-          message: `Complaint Uploaded Successfully! ${uploadedImages.length > 0 ? `(${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''})` : ''}`, 
-          type: 'success' 
+        setToast({
+          message: `Complaint Uploaded Successfully! ${uploadedImages.length > 0 ? `(${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''})` : ''}`,
+          type: 'success'
         });
-        
+
         // Reset form after a short delay
         setTimeout(() => {
           setIssueTitle('');
@@ -289,9 +303,9 @@ const ReportIssue = () => {
       })
       .catch(error => {
         console.error('Error submitting complaint:', error);
-        setToast({ 
-          message: error.message || 'Failed to submit complaint. Please try again.', 
-          type: 'error' 
+        setToast({
+          message: error.message || 'Failed to submit complaint. Please try again.',
+          type: 'error'
         });
       });
   };

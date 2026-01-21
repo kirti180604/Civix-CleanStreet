@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Toast from './components/Toast';
 import { profileAPI, authAPI } from './services/api';
-import Toast from './components/Toast';
 
 const ProfileSettings = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
