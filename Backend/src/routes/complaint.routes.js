@@ -1,10 +1,29 @@
 const express = require("express");
 
+const mongoose = require("mongoose");
+
 const auth = require("../middleware/auth.middleware");
 const upload = require("../middleware/upload.middleware");
 const Complaint = require("../models/Complaint");
 
 const router = express.Router();
+
+router.get("/:id", async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ msg: "Invalid complaint id" });
+    }
+
+    const complaint = await Complaint.findById(req.params.id).populate(
+      "user_id",
+      "firstName lastName name email"
+    );
+    if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
+    res.json(complaint);
+  } catch (err) {
+    res.status(500).json({ msg: err.message || "Failed to fetch complaint" });
+  }
+});
 
 router.post("/submit", auth, upload.single("photo"), async (req, res) => {
   try {
