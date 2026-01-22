@@ -7,8 +7,6 @@ import {
   ArrowLeft, Calendar, MapPin, FileText, Image, MessageSquare, PlusCircle,  Activity,Search,Pencil,Trash2, UserCog
 } from 'lucide-react';
 
-
-
 import {
   ResponsiveContainer,
   PieChart,
@@ -24,9 +22,6 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-
-
-
 
 import L from "leaflet";
 const statusIcon = (status) =>
@@ -775,12 +770,12 @@ const DashboardView = ({
                   <YAxis allowDecimals={false} />
                   <Tooltip />
                   <Line
-  type="monotone"
-  dataKey="complaints"
-  stroke="#B77A4D"
-  strokeWidth={3}
-  dot={{ r: 4 }}
-/>
+                  type="monotone"
+                   dataKey="complaints"
+                  stroke="#B77A4D"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                  />
 
                 </LineChart>
               </ResponsiveContainer>
