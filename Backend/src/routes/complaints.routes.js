@@ -1,5 +1,7 @@
 const express = require("express");
 
+const mongoose = require("mongoose");
+
 const auth = require("../middleware/auth.middleware");
 const Complaint = require("../models/Complaint");
 const Comment = require("../models/Comment");
@@ -25,7 +27,14 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const complaint = await Complaint.findById(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ msg: "Invalid complaint id" });
+    }
+
+    const complaint = await Complaint.findById(req.params.id).populate(
+      "user_id",
+      "firstName lastName name email"
+    );
     if (!complaint) return res.status(404).json({ msg: "Complaint not found" });
     res.json(complaint);
   } catch (err) {

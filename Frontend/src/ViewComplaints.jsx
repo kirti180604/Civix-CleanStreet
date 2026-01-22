@@ -269,10 +269,9 @@ const ViewComplaints = () => {
   // Effect to fetch complaints from API
   useEffect(() => {
     setIsLoadingComplaints(true);
-    const token = localStorage.getItem('token');
 
-    const fetcher = token ? profileAPI.getUserComplaints : complaintsAPI.getAll;
-    fetcher()
+    // Community feed should show all complaints (not only the logged-in user's complaints).
+    complaintsAPI.getAll()
       .then((data) => {
         if (Array.isArray(data)) {
           setComplaints(data.map(mapApiComplaintToUi));
