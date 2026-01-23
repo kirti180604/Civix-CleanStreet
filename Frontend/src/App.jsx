@@ -7,7 +7,8 @@ import Signup from './Signup';
 import ProfileSettings from './Profilesettings';
 import ReportIssue from './ReportIssue';
 import ViewComplaints from './ViewComplaints';
-import User from './User';   // ✅ ADD THIS
+import User from './User';
+import Admin from './Admin';   // ✅ ADD THIS
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -35,6 +36,18 @@ function App() {
             element={
               isLoggedIn ? (
                 <User />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+
+          {/* ✅ Admin Dashboard Page */}
+          <Route
+            path="/admin"
+            element={
+              isLoggedIn ? (
+                <Admin />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -78,16 +91,10 @@ function App() {
           />
 
           {/* Report Issue Page - PUBLIC ACCESS */}
-          <Route
-            path="/report"
-            element={<ReportIssue />}
-          />
+          <Route path="/report" element={<ReportIssue />} />
 
           {/* View Complaints Page - PUBLIC ACCESS */}
-          <Route
-            path="/complaints"
-            element={<ViewComplaints />}
-          />
+          <Route path="/complaints" element={<ViewComplaints />} />
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
