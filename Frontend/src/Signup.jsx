@@ -47,6 +47,16 @@ const Signup = () => {
     setConfirmError(cErr);
     if (pErr || cErr) return;
 
+    // Store role in localStorage along with registration
+    if (role === 'Admin') {
+      localStorage.setItem('userRole', 'admin');
+    } else {
+      localStorage.setItem('userRole', 'user');
+    }
+    
+    // Store user name
+    localStorage.setItem('userName', `${firstName} ${lastName}`);
+    
     // Simulate successful signup
     alert('Signup successful! Redirecting to login...');
     navigate('/login');

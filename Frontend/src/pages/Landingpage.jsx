@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   ClipboardList, 
@@ -20,22 +20,104 @@ import {
   Clock,
   MapPin,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  LogOut,
+  Shield // Added for admin icon
 } from 'lucide-react';
 
 // Header Component
 const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
+
+  // Get user info from localStorage on component mount
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    const storedRole = localStorage.getItem('userRole');
+    if (storedName) {
+      setUserName(storedName);
+    }
+    if (storedRole) {
+      setUserRole(storedRole);
+    }
+  }, [isLoggedIn]);
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Home size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
-    { id: 'report', label: 'Report Issue', icon: <ClipboardList size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
-    { id: 'complaints', label: 'View Complaints', icon: <Eye size={20} />, activeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+    { 
+      id: 'dashboard', 
+      label: 'Dashboard', 
+      icon: <Home size={20} />, 
+      activeColor: 'bg-amber-100 text-amber-700 border-amber-200',
+      path: userRole === 'admin' ? '/admin-dashboard' : '/dashboard',
+      requiresAuth: true
+    },
+    { 
+      id: 'report', 
+      label: 'Report Issue', 
+      icon: <ClipboardList size={20} />, 
+      activeColor: 'bg-amber-100 text-amber-700 border-amber-200',
+      path: '/report',
+      requiresAuth: true
+    },
+    { 
+      id: 'complaints', 
+      label: 'View Complaints', 
+      icon: <Eye size={20} />, 
+      activeColor: 'bg-amber-100 text-amber-700 border-amber-200',
+      path: '/complaints',
+      requiresAuth: true
+    },
   ];
 
+  // Add Admin Panel link if user is admin
+  if (userRole === 'admin') {
+    navigationItems.push({
+      id: 'admin',
+      label: 'Admin Panel',
+      icon: <Shield size={20} />,
+      activeColor: 'bg-red-100 text-red-700 border-red-200',
+      path: '/admin-dashboard',
+      requiresAuth: true
+    });
+  }
+
+  // Update activeTab based on current location
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const currentItem = navigationItems.find(item => item.path === currentPath);
+    if (currentItem) {
+      setActiveTab(currentItem.id);
+    }
+  }, [location, navigationItems, setActiveTab]);
+
   const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
     setIsLoggedIn(false);
+    setUserName('');
+    setUserRole('');
+    // Navigate to home page after logout
+    navigate('/');
+    setMobileMenuOpen(false);
   };
+
+  const handleNavClick = (itemId, itemPath) => {
+    setActiveTab(itemId);
+    // If user clicks on the same tab they're already on, refresh the page
+    if (activeTab === itemId) {
+      window.location.href = itemPath;
+    }
+  };
+
+  // Filter navigation items based on authentication
+  const filteredNavItems = navigationItems.filter(item => 
+    !item.requiresAuth || isLoggedIn
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
@@ -53,11 +135,11 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-2">
-            {navigationItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.id}
-                to="/"
-                onClick={() => setActiveTab(item.id)}
+                to={item.path}
+                onClick={() => handleNavClick(item.id, item.path)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 hover-lift border ${
                   activeTab === item.id 
                     ? `${item.activeColor} shadow-sm` 
@@ -70,16 +152,28 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
             ))}
           </nav>
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons and User Info */}
           <div className="hidden md:flex items-center space-x-3">
             {isLoggedIn ? (
-              <button 
-                className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors hover-lift"
-                onClick={handleLogout}
-              >
-                <LogIn size={20} />
-                <span>Logout</span>
-              </button>
+              <div className="flex items-center space-x-4">
+                {userName && (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-semibold text-amber-600">{userName}</span>
+                    {userRole === 'admin' && (
+                      <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button 
+                  className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors hover-lift"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={20} />
+                  <span>Logout</span>
+                </button>
+              </div>
             ) : (
               <>
                 <Link to="/login" className="flex items-center space-x-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors hover-lift no-underline">
@@ -107,12 +201,12 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t pt-4">
             <div className="space-y-2">
-              {navigationItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <Link
                   key={item.id}
-                  to="/"
+                  to={item.path}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    handleNavClick(item.id, item.path);
                     setMobileMenuOpen(false);
                   }}
                   className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg feature-card no-underline ${
@@ -127,16 +221,27 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
               ))}
               <div className="pt-2 space-y-2">
                 {isLoggedIn ? (
-                  <button 
-                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-amber-600 text-white rounded-lg hover-lift"
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogIn size={20} />
-                    <span>Logout</span>
-                  </button>
+                  <>
+                    {userName && (
+                      <div className="px-4 py-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold text-amber-600">{userName}</span>
+                          {userRole === 'admin' && (
+                            <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                              Admin
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    <button 
+                      className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-amber-600 text-white rounded-lg hover-lift"
+                      onClick={handleLogout}
+                    >
+                      <LogOut size={20} />
+                      <span>Logout</span>
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link 
@@ -166,8 +271,11 @@ const Header = ({ activeTab, setActiveTab, isLoggedIn, setIsLoggedIn }) => {
   );
 };
 
+// ... (Rest of the LandingPage component remains exactly the same as before)
+// Only the Header component was updated above
+
 // Hero Component
-const Hero = () => {
+const Hero = ({ setActiveTab }) => {
   return (
     <section className="mb-12">
       <div className="relative rounded-2xl overflow-hidden shadow-xl min-h-[450px]">
@@ -204,14 +312,22 @@ const Hero = () => {
               Report issues, track progress, and make a real difference.
             </p>
             <div className="flex flex-wrap gap-4 animate-fade-in">
-              <button className="flex items-center space-x-2 bg-white text-amber-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 hover-lift hover:scale-105">
+              <Link 
+                to="/report"
+                onClick={() => setActiveTab('report')}
+                className="flex items-center space-x-2 bg-white text-amber-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 hover-lift hover:scale-105 no-underline"
+              >
                 <PlusCircle size={20} />
                 <span>Report an Issue</span>
-              </button>
-              <button className="flex items-center space-x-2 bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 hover-lift hover:scale-105">
+              </Link>
+              <Link 
+                to="/complaints"
+                onClick={() => setActiveTab('complaints')}
+                className="flex items-center space-x-2 bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 hover-lift hover:scale-105 no-underline"
+              >
                 <EyeIcon size={20} />
                 <span>View Active Issues</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -303,13 +419,17 @@ const Stats = () => {
 };
 
 // QuickActions Component
-const QuickActions = () => {
+const QuickActions = ({ setActiveTab, isLoggedIn }) => {
   return (
     <div className="mb-12">
       <div className="bg-gradient-to-b from-amber-600 to-yellow-700 rounded-2xl shadow-lg p-6 text-white h-full">
         <h2 className="text-2xl font-bold mb-6">Quick Actions</h2>
         <div className="space-y-4">
-          <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift">
+          <Link 
+            to={isLoggedIn ? "/report" : "/login"}
+            onClick={() => setActiveTab(isLoggedIn ? 'report' : 'login')}
+            className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift no-underline text-white"
+          >
             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
               <PlusCircle size={24} />
             </div>
@@ -317,8 +437,12 @@ const QuickActions = () => {
               <div className="font-semibold">Report New Issue</div>
               <div className="text-sm opacity-80">Submit a problem you found</div>
             </div>
-          </button>
-          <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift">
+          </Link>
+          <Link 
+            to={isLoggedIn ? "/complaints" : "/login"}
+            onClick={() => setActiveTab(isLoggedIn ? 'complaints' : 'login')}
+            className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift no-underline text-white"
+          >
             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
               <EyeIcon size={24} />
             </div>
@@ -326,7 +450,7 @@ const QuickActions = () => {
               <div className="font-semibold">View Complaints</div>
               <div className="text-sm opacity-80">Check reported issues</div>
             </div>
-          </button>
+          </Link>
           <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl p-4 flex items-center space-x-3 transition-colors hover-lift">
             <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
               <Users size={24} />
@@ -451,13 +575,19 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors hover-lift">Dashboard</a>
+                <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors hover-lift no-underline">
+                  Dashboard
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors hover-lift">Report Issue</a>
+                <Link to="/report" className="text-gray-400 hover:text-white transition-colors hover-lift no-underline">
+                  Report Issue
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors hover-lift">View Complaints</a>
+                <Link to="/complaints" className="text-gray-400 hover:text-white transition-colors hover-lift no-underline">
+                  View Complaints
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors hover-lift">How It Works</a>
@@ -492,9 +622,8 @@ const Footer = () => {
 };
 
 // Main Landing Page Component
-const LandingPage = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const LandingPage = ({ isLoggedIn, setIsLoggedIn }) => {
+  const [activeTab, setActiveTab] = useState('home');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -506,12 +635,12 @@ const LandingPage = () => {
       />
       
       <main className="container mx-auto px-4 py-8">
-        <Hero />
+        <Hero setActiveTab={setActiveTab} />
         <HowItWorks />
         <Stats />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <QuickActions />
+          <QuickActions setActiveTab={setActiveTab} isLoggedIn={isLoggedIn} />
           <RecentActivity />
         </div>
       </main>
